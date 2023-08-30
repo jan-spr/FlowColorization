@@ -13,4 +13,4 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
 
 ## Requirements (so far):
 - cv2
-- skimage
+- scikit-image
