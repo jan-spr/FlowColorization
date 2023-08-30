@@ -4,3 +4,4 @@ Project for Computer Vision Course: Colorizing video using frame-to-frame optica
 ## Requirements:
 - cv2
 - skimage
+- tqdm
