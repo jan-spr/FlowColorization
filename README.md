@@ -12,5 +12,5 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
   - Training & Demo Jupyter Notebooks?
 
 ## Requirements (so far):
-- cv2
+- opencv-python
 - scikit-image
