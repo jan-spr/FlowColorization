@@ -11,7 +11,6 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
   - Decide on Architecture
   - Training & Demo Jupyter Notebooks?
 
-## Requirements:
+## Requirements (so far):
 - cv2
 - skimage
-- tqdm
