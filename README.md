@@ -6,7 +6,7 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
 
 ## ToDo's:
 - Data:
-  - finish optical flow implentation
+  - finish optical flow implementation
 - Network:
   - Decide on Architecture
   - Training & Demo Jupyter Notebooks?
