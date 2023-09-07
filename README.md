@@ -14,3 +14,4 @@ Layout I&O:
 - opencv-python
 - scikit-image
 - pytorch
+- torchvision
