@@ -13,3 +13,5 @@ Layout I&O:
 ## Requirements (so far):
 - opencv-python
 - scikit-image
+- pytorch
+- torchvision
