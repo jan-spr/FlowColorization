@@ -15,3 +15,4 @@ Layout I&O:
 - scikit-image
 - pytorch
 - torchvision
+- matplotlib
