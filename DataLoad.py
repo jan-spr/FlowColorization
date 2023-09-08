@@ -161,11 +161,16 @@ class CustomImageDataset(Dataset):
         return input, output
     
 
-def data_to_images(input, output, use_flow=False):
+def data_to_images(input, output, use_flow=False, input_only=False):
+    # create viewable rgb images from NN input and output tensors
+    # use_flow: if true, input has 6 channels, else 4
+    # input_only: if true, only return input images
 
     input = torch.transpose(input, 0, 2)
 
     output = torch.transpose(output, 0, 2)
+    print(input.shape)
+    print(output.shape)
 
     if use_flow:
         col_img = input.numpy()[:, :, 0:3]
@@ -174,12 +179,27 @@ def data_to_images(input, output, use_flow=False):
     else:
         col_img = input.numpy()[:, :, 0:3]
         grey_img = input.numpy()[:, :, 3:4]
-
-
+    
     col_img  = (col_img*255).astype(np.uint8)
     col_image = cv2.cvtColor(col_img, cv2.COLOR_LAB2BGR)
 
-    if use_flow:
-        return col_image, flow_img, grey_img
+    if not input_only:
+        output = output.numpy()
+        output = (output*255).astype(np.uint8)
+        lab = np.zeros((grey_img.shape[0], grey_img.shape[1], 3))
+        lab[:,:,0] = grey_img[:,:,0]
+        lab[:,:,1] = output[:,:,0]
+        lab[:,:,2] = output[:,:,1]
+        lab = lab.astype(np.uint8)
+        pred_rgb = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    if input_only:
+        if use_flow:
+            return col_image, flow_img, grey_img
+        else:
+            return col_image, None, grey_img
     else:
-        return col_image, None, grey_img
+        if use_flow:
+            return col_image, flow_img, grey_img, pred_rgb
+        else:
+            return col_image, None, grey_img, pred_rgb
