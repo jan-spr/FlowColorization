@@ -25,6 +25,9 @@ nd_array_path = os.path.join(dataset_path, nd_array_folder)
 class CustomImageDataset(Dataset):
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     def __init__(self, resolution, use_flow=False):
+        self.use_flow = use_flow
+        self.resolution = resolution
+
         # Load colored images
         self.col_dir = os.path.join(img_path, resolution)
         
@@ -91,15 +94,22 @@ class CustomImageDataset(Dataset):
         return col_img, col_prev_img, gray_img, flow_img
     
     def __input_concat__(self, col_prev_img, gray_img, flow_img):
-    
-        input_tens = torch.cat((
-            torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
-            torch.unsqueeze(col_prev_img[...,1], dim=2), # A channel
-            torch.unsqueeze(col_prev_img[...,2], dim=2), # B channel
-            torch.unsqueeze(flow_img[...,0], dim=2),    # x flow
-            torch.unsqueeze(flow_img[...,1], dim=2),    # y flow
-            torch.unsqueeze(gray_img[...,0], dim=2)     # L channel
-            ),dim=2)
+        if self.use_flow:
+            input_tens = torch.cat((
+                torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
+                torch.unsqueeze(col_prev_img[...,1], dim=2), # A channel
+                torch.unsqueeze(col_prev_img[...,2], dim=2), # B channel
+                torch.unsqueeze(flow_img[...,0], dim=2),    # x flow
+                torch.unsqueeze(flow_img[...,1], dim=2),    # y flow
+                torch.unsqueeze(gray_img[...,0], dim=2)     # L channel
+                ),dim=2)
+        else:
+            input_tens = torch.cat((
+                torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
+                torch.unsqueeze(col_prev_img[...,1], dim=2), # A channel
+                torch.unsqueeze(col_prev_img[...,2], dim=2), # B channel
+                torch.unsqueeze(gray_img[...,0], dim=2)     # L channel
+                ),dim=2)
         return input_tens
 
     def __target_concat__(self, col_img):
@@ -144,17 +154,32 @@ class CustomImageDataset(Dataset):
 
         output = self.__target_concat__(col_img)
 
+        input = torch.transpose(input, 0, 2)
+
+        output = torch.transpose(output, 0, 2)
+
         return input, output
     
 
-def data_to_images(input, output):
-    col_img = input.numpy()[:, :, 0:3]
-    flow_img = input.numpy()[:, :, 3:5]
-    grey_img = input.numpy()[:, :, 5:6]
+def data_to_images(input, output, use_flow=False):
+
+    input = torch.transpose(input, 0, 2)
+
+    output = torch.transpose(output, 0, 2)
+
+    if use_flow:
+        col_img = input.numpy()[:, :, 0:3]
+        flow_img = input.numpy()[:, :, 3:5]
+        grey_img = input.numpy()[:, :, 5:6]
+    else:
+        col_img = input.numpy()[:, :, 0:3]
+        grey_img = input.numpy()[:, :, 3:4]
 
 
     col_img  = (col_img*255).astype(np.uint8)
-
     col_image = cv2.cvtColor(col_img, cv2.COLOR_LAB2BGR)
 
-    return col_image, flow_img, grey_img
+    if use_flow:
+        return col_image, flow_img, grey_img
+    else:
+        return col_image, None, grey_img

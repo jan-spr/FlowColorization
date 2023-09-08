@@ -59,6 +59,7 @@ class UNet(nn.Module):
         self.d22 = nn.Conv2d(256, 256, kernel_size=3, padding='same')
 
         self.upconv3 = nn.ConvTranspose2d(256, 128, kernel_size=2, stride=2) # output: 160x88x128
+        self.d31 = nn.Conv2d(256, 128, kernel_size=3, padding=1)
         self.d32 = nn.Conv2d(128, 128, kernel_size=3, padding='same')
 
         self.upconv4 = nn.ConvTranspose2d(128, 64, kernel_size=2, stride=2) # output: 320x176x64
@@ -68,24 +69,29 @@ class UNet(nn.Module):
         # Output layer
         self.outconv = nn.Conv2d(64, n_output_channels, kernel_size=1) # output: 320x176x n_output_channels
 
-    def forward(self, x):
+    def forward(self, x, verbose=False):
         # Encoder
 
-        print('x.shape: {}'.format(x.shape))
+        if verbose:
+            print('x.shape: {}'.format(x.shape))
 
         xe11 = relu(self.e11(x))
-        print('xe11.shape: {}'.format(xe11.shape))
         xe12 = relu(self.e12(xe11))
         xp1 = self.pool1(xe12)
-        print('xp1.shape: {}'.format(xp1.shape))
+        if verbose:
+            print('xp1.shape: {}'.format(xp1.shape))
 
         xe21 = relu(self.e21(xp1))
         xe22 = relu(self.e22(xe21))
         xp2 = self.pool2(xe22)
+        if verbose:
+            print('xp2.shape: {}'.format(xp2.shape))
 
         xe31 = relu(self.e31(xp2))
         xe32 = relu(self.e32(xe31))
         xp3 = self.pool3(xe32)
+        if verbose:
+            print('xp3.shape: {}'.format(xp3.shape))
 
         xe41 = relu(self.e41(xp3))
         xe42 = relu(self.e42(xe41))
