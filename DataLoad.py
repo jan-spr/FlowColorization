@@ -147,3 +147,14 @@ class CustomImageDataset(Dataset):
         return input, output
     
 
+def data_to_images(input, output):
+    col_img = input.numpy()[:, :, 0:3]
+    flow_img = input.numpy()[:, :, 3:5]
+    grey_img = input.numpy()[:, :, 5:6]
+
+
+    col_img  = (col_img*255).astype(np.uint8)
+
+    col_image = cv2.cvtColor(col_img, cv2.COLOR_LAB2BGR)
+
+    return col_image, flow_img, grey_img

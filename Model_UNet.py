@@ -16,7 +16,7 @@ from torch.nn.functional import relu
 
 
 class UNet(nn.Module):
-    def __init__(self, n_class):
+    def __init__(self, n_input_channels=4, n_output_channels=2):
         super().__init__()
         
         # Encoder
@@ -25,7 +25,7 @@ class UNet(nn.Module):
         # -------
         # input: 320 x 176 x 4
         # F0: color (LAB), F1: grayscale (L)       [+later: flow (UV)]
-        self.e11 = nn.Conv2d(4, 64, kernel_size=3, padding='same') # output: 320x176x64
+        self.e11 = nn.Conv2d(n_input_channels, 64, kernel_size=3, padding='same') # output: 320x176x64
         self.e12 = nn.Conv2d(64, 64, kernel_size=3, padding='same') # output: 320x176x64
         self.pool1 = nn.MaxPool2d(kernel_size=2, stride=2) # output: 320x176x64
 
@@ -66,13 +66,18 @@ class UNet(nn.Module):
         self.d42 = nn.Conv2d(64, 64, kernel_size=3, padding='same')
 
         # Output layer
-        self.outconv = nn.Conv2d(64, n_class, kernel_size=1) # output: 320x176x n_class
+        self.outconv = nn.Conv2d(64, n_output_channels, kernel_size=1) # output: 320x176x n_output_channels
 
     def forward(self, x):
         # Encoder
+
+        print('x.shape: {}'.format(x.shape))
+
         xe11 = relu(self.e11(x))
+        print('xe11.shape: {}'.format(xe11.shape))
         xe12 = relu(self.e12(xe11))
         xp1 = self.pool1(xe12)
+        print('xp1.shape: {}'.format(xp1.shape))
 
         xe21 = relu(self.e21(xp1))
         xe22 = relu(self.e22(xe21))
@@ -114,3 +119,42 @@ class UNet(nn.Module):
         out = self.outconv(xd42)
 
         return out
+    
+
+class FeatureLoss(nn.Module):
+    def __init__(self, layer_wgts=[20, 70, 10]):
+        super().__init__()
+
+        self.m_feat = models.vgg16_bn(True).features.cuda().eval()
+        requires_grad(self.m_feat, False)
+        blocks = [
+            i - 1
+            for i, o in enumerate(children(self.m_feat))
+            if isinstance(o, nn.MaxPool2d)
+        ]
+        layer_ids = blocks[2:5]
+        self.loss_features = [self.m_feat[i] for i in layer_ids]
+        self.hooks = hook_outputs(self.loss_features, detach=False)
+        self.wgts = layer_wgts
+        self.metric_names = ['pixel'] + [f'feat_{i}' for i in range(len(layer_ids))]
+        self.base_loss = F.l1_loss
+
+    def _make_features(self, x, clone=False):
+        self.m_feat(x)
+        return [(o.clone() if clone else o) for o in self.hooks.stored]
+
+    def forward(self, input, target):
+        out_feat = self._make_features(target, clone=True)
+        in_feat = self._make_features(input)
+        self.feat_losses = [self.base_loss(input, target)]
+        self.feat_losses += [
+            self.base_loss(f_in, f_out) * w
+            for f_in, f_out, w in zip(in_feat, out_feat, self.wgts)
+        ]
+
+        self.metrics = dict(zip(self.metric_names, self.feat_losses))
+        return sum(self.feat_losses)
+
+    def __del__(self):
+        self.hooks.remove()
+ 
