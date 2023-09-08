@@ -167,10 +167,7 @@ def data_to_images(input, output, use_flow=False, input_only=False):
     # input_only: if true, only return input images
 
     input = torch.transpose(input, 0, 2)
-
     output = torch.transpose(output, 0, 2)
-    print(input.shape)
-    print(output.shape)
 
     if use_flow:
         col_img = input.numpy()[:, :, 0:3]
@@ -187,7 +184,7 @@ def data_to_images(input, output, use_flow=False, input_only=False):
         output = output.numpy()
         output = (output*255).astype(np.uint8)
         lab = np.zeros((grey_img.shape[0], grey_img.shape[1], 3))
-        lab[:,:,0] = grey_img[:,:,0]
+        lab[:,:,0] = grey_img[:,:,0]*255
         lab[:,:,1] = output[:,:,0]
         lab[:,:,2] = output[:,:,1]
         lab = lab.astype(np.uint8)
