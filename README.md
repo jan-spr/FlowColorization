@@ -13,6 +13,8 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
   - think about Loss function
 - NN training
   - save NN state & loss trajectory
+- Results
+  - show performance of fully trained Model (make NB)
 
 Layout I&O:
 ![NN IO Design](https://github.com/jan-spr/FlowColorization/blob/main/NN%20Diagram.png?raw=true)
