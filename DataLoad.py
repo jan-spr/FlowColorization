@@ -22,6 +22,55 @@ img_path = os.path.join(dataset_path, image_folder)
 nd_array_path = os.path.join(dataset_path, nd_array_folder)
 
 
+def images_to_tensor(sample):
+    col_img, col_prev_img, gray_img, flow_img = sample['col_img'], sample['col_prev_img'], sample['gray_img'], sample['flow_img']
+    col_img = cvtColor(col_img, cv2.COLOR_RGB2LAB)
+    col_prev_img = cvtColor(col_prev_img, cv2.COLOR_RGB2LAB)
+    gray_img = cvtColor(gray_img, cv2.COLOR_RGB2LAB)
+
+    col_img = torch.from_numpy(col_img)
+    col_prev_img = torch.from_numpy(col_prev_img)
+    gray_img = torch.from_numpy(gray_img)
+    if flow_img is not None:
+        flow_img = torch.from_numpy(flow_img)
+
+    return col_img, col_prev_img, gray_img, flow_img
+
+
+def images_normalize(col_img, col_prev_img, gray_img, flow_img):
+    # Normalize images to [0,1] for NN
+    # flow values vaguely around +- 1
+    col_img = torch.mul(col_img, 1/255)
+    col_prev_img = torch.mul(col_prev_img, 1/255)
+    gray_img = torch.mul(gray_img, 1/255)
+    if flow_img is not None:
+        flow_img = torch.mul(flow_img, 1/40)
+
+    return col_img, col_prev_img, gray_img, flow_img
+
+def input_concat(col_prev_img, gray_img, flow_img):
+        if flow_img is not None:
+            input_tens = torch.cat((
+                torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
+                torch.unsqueeze(col_prev_img[...,1], dim=2), # A channel
+                torch.unsqueeze(col_prev_img[...,2], dim=2), # B channel
+                torch.unsqueeze(flow_img[...,0], dim=2),    # x flow
+                torch.unsqueeze(flow_img[...,1], dim=2),    # y flow
+                torch.unsqueeze(gray_img[...,0], dim=2)     # L channel
+                ),dim=2)
+        else:
+            input_tens = torch.cat((
+                torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
+                torch.unsqueeze(col_prev_img[...,1], dim=2), # A channel
+                torch.unsqueeze(col_prev_img[...,2], dim=2), # B channel
+                torch.unsqueeze(gray_img[...,0], dim=2)     # L channel
+                ),dim=2)
+        return input_tens
+
+def target_concat(col_img):
+        target_tens = col_img[...,1:]
+        return target_tens
+
 class CustomImageDataset(Dataset):
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     def __init__(self, resolution, use_flow=False):
@@ -201,21 +250,21 @@ def data_to_images(input, output, use_flow=False, input_only=False):
         else:
             return col_image, None, grey_img, pred_rgb
 
-def images_to_data(col_image, flow_img, grey_img):
+def images_to_data(col_img, flow_img, gray_img):
     sample = {
             'col_img': col_img,
-            'col_prev_img': col_prev_img,
+            'col_prev_img': col_img,
             'gray_img': gray_img,
             'flow_img': flow_img
         }
 
-    col_img, col_prev_img, gray_img, flow_img = CustomImageDataset.__images_to_tensor__(sample)
+    col_img, col_prev_img, gray_img, flow_img = images_to_tensor(sample)
 
-    col_img, col_prev_img, gray_img, flow_img = CustomImageDataset.__images_normalize__(col_img, col_prev_img, gray_img, flow_img)
+    col_img, col_prev_img, gray_img, flow_img = images_normalize(col_img, col_prev_img, gray_img, flow_img)
     
-    input = CustomImageDataset.__input_concat__(col_prev_img, gray_img, flow_img)
+    input = input_concat(col_prev_img, gray_img, flow_img)
 
-    output = CustomImageDataset.__target_concat__(col_img)
+    output = target_concat(col_img)
 
     input = torch.transpose(input, 0, 2)
 
