@@ -89,7 +89,7 @@ class CustomImageDataset(Dataset):
         col_img = torch.mul(col_img, 1/255)
         col_prev_img = torch.mul(col_prev_img, 1/255)
         gray_img = torch.mul(gray_img, 1/255)
-        flow_img = torch.mul(flow_img, 1/10)
+        flow_img = torch.mul(flow_img, 1/40)
 
         return col_img, col_prev_img, gray_img, flow_img
     
@@ -200,3 +200,19 @@ def data_to_images(input, output, use_flow=False, input_only=False):
             return col_image, flow_img, grey_img, pred_rgb
         else:
             return col_image, None, grey_img, pred_rgb
+
+def images_to_data(col_image, flow_img, grey_img):
+    # create NN input tensor from viewable rgb images
+    # flow_img: if not None, input has 6 channels, else 4
+
+    col_img = cv2.cvtColor(col_image, cv2.COLOR_BGR2LAB)
+    grey_img = cv2.cvtColor(grey_img, cv2.COLOR_BGR2LAB)
+    
+    if flow_img is not None:
+        input = np.concatenate((col_img, flow_img, grey_img), axis=2)
+    else:
+        input = np.concatenate((col_img, grey_img), axis=2)
+    
+    input = torch.from_numpy(input)
+    input = torch.transpose(input, 0, 2)
+    return input
