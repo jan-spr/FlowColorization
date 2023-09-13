@@ -5,7 +5,7 @@ Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) s
 ## ToDo's:
 - Data:
   - test/train split
-  - train samples including >1 frame difference
+  - data samples including >1 frame difference
 - Network:
   - UNet, VAE, GAN ?
   - think about Loss function
