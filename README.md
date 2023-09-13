@@ -3,8 +3,7 @@
 Dataset has to be [donwloaded](https://davischallenge.org/davis2017/code.html) separately.
 
 ## Contents:
-1. [dataset_preparation.ipynb](dataset_preparation.ipynb)
-
+[dataset_preparation.ipynb](dataset_preparation.ipynb):
 NB for generating the proper training data from DAVIS-videos: RGB (and grey) images, and optical flows
 
 2. [UNet_train_noFlow.ipynb](UNet_train_noFlow.ipynb)
