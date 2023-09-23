@@ -22,13 +22,9 @@ image_folder = 'JPEGImages'
 nd_array_folder = 'nd_arrays'
 dataset_path = os.path.expanduser(dataset_path)
 dataset_path = os.path.join(dataset_path, dataset_name)
-img_path = os.path.join(dataset_path, image_folder)
-nd_array_path = os.path.join(dataset_path, nd_array_folder)
 
 train_folder = 'train'
-train_folder = os.path.join(img_path, train_folder)
-val_folder = 'validation'
-val_folder = os.path.join(img_path, val_folder)
+test_folder = 'test_dev'
 
 def images_to_tensor(sample):
     # Convert images to tensor format for NN input
@@ -85,7 +81,16 @@ def target_concat(col_img):
 class CustomImageDataset(Dataset):
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     # pytorch dataset class for loading images from the DAVIS dataset
-    def __init__(self, resolution, use_flow=False, train=True):
+    def __init__(self, resolution, use_flow=False, test=False):
+
+        # Load respective directories
+        if test:
+            dataset_path = os.path.join(dataset_path, test_folder)
+        else:  
+            dataset_path = os.path.join(dataset_path, train_folder)
+
+        img_path = os.path.join(dataset_path, image_folder)
+        nd_array_path = os.path.join(dataset_path, nd_array_folder)
         self.use_flow = use_flow
         self.resolution = resolution
 
