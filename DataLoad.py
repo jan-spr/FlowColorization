@@ -85,12 +85,12 @@ class CustomImageDataset(Dataset):
 
         # Load respective directories
         if test:
-            dataset_path = os.path.join(dataset_path, test_folder)
+            dataset_path_init = os.path.join(dataset_path, test_folder)
         else:  
-            dataset_path = os.path.join(dataset_path, train_folder)
+            dataset_path_init = os.path.join(dataset_path, train_folder)
 
-        img_path = os.path.join(dataset_path, image_folder)
-        nd_array_path = os.path.join(dataset_path, nd_array_folder)
+        img_path = os.path.join(dataset_path_init, image_folder)
+        nd_array_path = os.path.join(dataset_path_init, nd_array_folder)
         self.use_flow = use_flow
         self.resolution = resolution
 
