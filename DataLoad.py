@@ -106,7 +106,7 @@ class CustomImageDataset(Dataset):
 
         # Load flow images
         # nd_arrays are stored in a different folder
-        self.flow_dir = os.path.join(nd_array_path, resolution+'_farneback')
+        self.flow_dir = os.path.join(nd_array_path, resolution+'_deepflow')
 
         # dictionary of video names and their lengths
         self.vid_lengths = {}
