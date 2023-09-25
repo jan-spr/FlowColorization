@@ -221,7 +221,7 @@ def data_to_images(input, output, use_flow=False, input_only=False):
         grey_img = input.numpy()[:, :, 3:4]
     
     col_img  = (col_img*255).astype(np.uint8)
-    col_image = cv2.cvtColor(col_img, cv2.COLOR_LAB2BGR)
+    col_image = cv2.cvtColor(col_img, cv2.COLOR_LAB2RGB)
 
     if not input_only:
         output = output.numpy()
@@ -231,7 +231,7 @@ def data_to_images(input, output, use_flow=False, input_only=False):
         lab[:,:,1] = output[:,:,0]
         lab[:,:,2] = output[:,:,1]
         lab = lab.astype(np.uint8)
-        pred_rgb = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+        pred_rgb = cv2.cvtColor(lab, cv2.COLOR_LAB2RGB)
 
     if input_only:
         if use_flow:
