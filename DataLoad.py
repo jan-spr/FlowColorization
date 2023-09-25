@@ -81,7 +81,7 @@ def target_concat(col_img):
 class CustomImageDataset(Dataset):
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     # pytorch dataset class for loading images from the DAVIS dataset
-    def __init__(self, resolution, use_flow=False, test=False):
+    def __init__(self, resolution, use_flow=False, test=False, flow_label='farneback'):
 
         # Load respective directories
         if test:
@@ -106,7 +106,8 @@ class CustomImageDataset(Dataset):
 
         # Load flow images
         # nd_arrays are stored in a different folder
-        self.flow_dir = os.path.join(nd_array_path, resolution+'_farneback')
+        
+        self.flow_dir = os.path.join(nd_array_path, resolution+'_'+flow_label)
 
         # dictionary of video names and their lengths
         self.vid_lengths = {}

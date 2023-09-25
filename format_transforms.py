@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import os
+import skimage
 
 # just a collection of functions, to reduce clutter in the notebooks
 # e.g. to convert between different image formats, or create video from images
@@ -48,3 +49,45 @@ def images_2_video(image_folder,video_name, fps=30):
 
     cv2.destroyAllWindows()
     video.release()
+
+def dense_optical_flow(input_image_1, input_image_2, method="farneback", params=[], to_gray=True):
+    # get the dense optical flow field between two images
+    # input_image_1: first image
+    # input_image_2: second image
+    # method: optical flow method (farneback, deepflow)
+
+    if method == "farneback":
+        method = cv2.calcOpticalFlowFarneback
+        # params: pyr_scale, levels, winsize, iterations, poly_n, poly_sigma, flags
+        params = [0.5, 3, 15, 3, 5, 1.2, 0]  # Farneback's algorithm parameters
+    elif method == "deepflow":
+        deepflow = cv2.optflow.createOptFlow_DeepFlow()
+        method = deepflow.calc
+        params = []
+
+    # create HSV & make Saturation a constant
+    hsv = np.zeros_like(input_image_1)
+    hsv[..., 1] = 255
+
+    # Convert to grayscale
+    if to_gray:
+        input_image_1 = cv2.cvtColor(input_image_1, cv2.COLOR_BGR2GRAY)
+        input_image_2 = cv2.cvtColor(input_image_2, cv2.COLOR_BGR2GRAY)
+
+    # Calculate dense optical flow by Farneback method
+    flow = method(input_image_1, input_image_2, None, *params)
+    return flow
+
+def resize_image(input_image, target_res = (176,320), L_img=None):
+    # resize image to target resolution
+    # input_image: image to resize
+    # target_res: target resolution
+    res_img = skimage.transform.resize(input_image, target_res, preserve_range=True)
+
+    if L_img is not None:
+        res_img = cv2.cvtColor(res_img, cv2.COLOR_RGB2LAB)
+        L_img = cv2.cvtColor(L_img, cv2.COLOR_RGB2LAB)
+        res_img[:,:,0] = L_img[:,:,0]
+        res_img = cv2.cvtColor(res_img, cv2.COLOR_LAB2RGB)
+
+    return res_img.astype(np.uint8)
