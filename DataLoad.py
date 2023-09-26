@@ -13,8 +13,8 @@ from cv2 import cvtColor
 # 2. images_to_tensor, images_normalize, input_concat, target_concat: helper functions
 
 def get_all_image_paths(dataset_path, subdir, res, method):
-    col_path = os.path.join(dataset_path, subdir, res)
-    gray_path = os.path.join(dataset_path, subdir, res + '_gray')
+    col_path = os.path.join(dataset_path, subdir, 'JPEGImages', res)
+    gray_path = os.path.join(dataset_path, subdir, 'JPEGImages', res + '_gray')
 
     if method == 'deepflow':
         flow_path = os.path.join(dataset_path, subdir, 'flow', res + '_deepflow')
