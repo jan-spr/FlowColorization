@@ -1,11 +1,8 @@
 import os
-
 import numpy as np
 
 import torch
 from torch.utils.data import Dataset
-from torchvision import datasets
-from torchvision.transforms import ToTensor
 
 import cv2
 from cv2 import imread
@@ -15,16 +12,15 @@ from cv2 import cvtColor
 # 1. CustomImageDataset: pytorch dataset class for loading images from the DAVIS dataset
 # 2. images_to_tensor, images_normalize, input_concat, target_concat: helper functions
 
+def get_all_image_paths(dataset_path, subdir, res, method):
+    col_path = os.path.join(dataset_path, subdir, res)
+    gray_path = os.path.join(dataset_path, subdir, res + '_gray')
 
-dataset_path = '~/Documents/Colorization/Datasets/'
-dataset_name = 'DAVIS'
-image_folder = 'JPEGImages'
-nd_array_folder = 'nd_arrays'
-dataset_path = os.path.expanduser(dataset_path)
-dataset_path = os.path.join(dataset_path, dataset_name)
+    if method == 'deepflow':
+        flow_path = os.path.join(dataset_path, subdir, 'flow', res + '_deepflow')
 
-train_folder = 'train'
-test_folder = 'test_dev'
+    return col_path, gray_path, flow_path
+
 
 def images_to_tensor(sample):
     # Convert images to tensor format for NN input
@@ -81,33 +77,13 @@ def target_concat(col_img):
 class CustomImageDataset(Dataset):
     # https://pytorch.org/tutorials/beginner/basics/data_tutorial.html
     # pytorch dataset class for loading images from the DAVIS dataset
-    def __init__(self, resolution, use_flow=False, test=False, flow_label='farneback'):
-
-        # Load respective directories
-        if test:
-            dataset_path_init = os.path.join(dataset_path, test_folder)
-        else:  
-            dataset_path_init = os.path.join(dataset_path, train_folder)
-
-        img_path = os.path.join(dataset_path_init, image_folder)
-        nd_array_path = os.path.join(dataset_path_init, nd_array_folder)
+    def __init__(self, dataset_path, subdir, res, method, use_flow=False, train=True):
         self.use_flow = use_flow
-        self.resolution = resolution
-
-        # Load colored images
-        self.col_dir = os.path.join(img_path, resolution)
-        
+        self.resolution = res
+        self.col_dir, self.gray_dir, self.flow_dir = get_all_image_paths(dataset_path, subdir, res, method)
         self.vid_labels = os.listdir(self.col_dir)
         self.vid_labels.sort()
         print('vid labels: {}'.format(self.vid_labels))
-
-        # Load gray images
-        self.gray_dir = os.path.join(img_path, resolution+'_gray')
-
-        # Load flow images
-        # nd_arrays are stored in a different folder
-        
-        self.flow_dir = os.path.join(nd_array_path, resolution+'_'+flow_label)
 
         # dictionary of video names and their lengths
         self.vid_lengths = {}
@@ -138,6 +114,7 @@ class CustomImageDataset(Dataset):
         raise IndexError('Index out of range')
     
     def __input_concat__(self, col_prev_img, gray_img, flow_img):
+        # Concatenate images to form NN input
         if self.use_flow:
             input_tens = torch.cat((
                 torch.unsqueeze(col_prev_img[...,0], dim=2), # L channel
@@ -157,10 +134,12 @@ class CustomImageDataset(Dataset):
         return input_tens
 
     def __target_concat__(self, col_img):
+        # slice LAB color image to get AB channels for NN target/ground truth
         target_tens = col_img[...,1:]
         return target_tens
 
     def __getitem__(self, idx, verbose=False):
+        # get item from dataset for NN training
         vid_label, frame_idx = self.__idx_to_vid__(idx)
         frame_idx += 1
 
@@ -191,15 +170,10 @@ class CustomImageDataset(Dataset):
         }
 
         col_img, col_prev_img, gray_img, flow_img = images_to_tensor(sample)
-
         col_img, col_prev_img, gray_img, flow_img = images_normalize(col_img, col_prev_img, gray_img, flow_img)
-        
         input = self.__input_concat__(col_prev_img, gray_img, flow_img)
-
         output = self.__target_concat__(col_img)
-
         input = torch.transpose(input, 0, 2)
-
         output = torch.transpose(output, 0, 2)
 
         return input, output
@@ -254,15 +228,10 @@ def images_to_data(col_img, flow_img, gray_img):
         }
 
     col_img, col_prev_img, gray_img, flow_img = images_to_tensor(sample)
-
     col_img, col_prev_img, gray_img, flow_img = images_normalize(col_img, col_prev_img, gray_img, flow_img)
-    
     input = input_concat(col_prev_img, gray_img, flow_img)
-
     output = target_concat(col_img)
-
     input = torch.transpose(input, 0, 2)
-
     output = torch.transpose(output, 0, 2)
 
     return input, output
