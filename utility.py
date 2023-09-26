@@ -7,12 +7,12 @@ import skimage
 # e.g. to convert between different image formats, or create video from images
 
 def make_dir(path):
+    # Creates a directory if it doesn't exist already
     if not os.path.exists(path):
         os.makedirs(path)
 
 def cartToPol(x, y):  
     # Convert cartesian to polar coordinates (for optical flow)
-    
     ang = np.arctan2(y, x)
     mag = np.hypot(x, y)
     return mag, ang
@@ -36,7 +36,15 @@ def uv_2_rgb(image_uv, resize=False):
     bgr = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
     return bgr
 
-def images_2_video(image_folder,video_name, fps=30):
+def images_2_video(image_folder, video_name, fps=30):
+    """
+    Takes the images of a folder and form them into a video.
+
+    :param image_folder: the folder where the images are stores as a string of the path
+    :param video_name: the name of the video as a string
+    :param fps: the number of fps as int
+    """
+
     image_names = os.listdir(image_folder)
     image_names.sort()
     frame = cv2.imread(os.path.join(image_folder, image_names[0]))
@@ -49,6 +57,43 @@ def images_2_video(image_folder,video_name, fps=30):
 
     cv2.destroyAllWindows()
     video.release()
+
+def all_images_2_video(dataset_path, subdir, res, video_folder, fps):
+    """
+    Creates videos of all subdirectories of the dataset_path.
+
+    :param dataset_path: the path to the (DAVIS) dataset as a string
+    :param subdir: the name of the subdirectory of DAVIS as a string. whether 'train', 'val' or 'test'
+    :param res: the resolution of the images as string, e.g. '176p'
+    :param video_folder: the name of the folder where the videos should be stored as a string
+    :param fps: the number of fps as int
+    """
+
+    image_path = os.path.join(dataset_path, subdir, res)
+    video_path = os.path.join(dataset_path, subdir, video_folder, res)
+
+    make_dir(video_path)
+
+    print('Image path: {}'.format(image_path))
+    print('Video path: {}'.format(video_path))
+
+    subdirs = os.listdir(image_path)
+    print('Number of subdirectories: {}'.format(len(subdirs)))
+
+    for subdir in tqdm(subdirs):
+        if subdir == '.DS_Store': continue
+        image_folder = os.path.join(image_path, subdir)
+        video_name = os.path.join(video_path, subdir + '.avi')
+        images_2_video(image_folder, video_name, fps)
+
+def load_image(image_path):
+    image = cv2.imread(image_path)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    return image
+
+def save_image(image, image_path):
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(image_path, image)
 
 def dense_optical_flow(input_image_1, input_image_2, method="farneback", params=[], to_gray=True):
     # get the dense optical flow field between two images
@@ -91,3 +136,14 @@ def resize_image(input_image, target_res = (176,320), L_img=None):
         res_img = cv2.cvtColor(res_img, cv2.COLOR_LAB2RGB)
 
     return res_img.astype(np.uint8)
+
+def checkpoint(folder, model, filename):
+    # Creates a checkpoint of the model
+    filename = os.path.join(folder, filename)
+    torch.save(model.state_dict(), filename)
+
+
+def resume(folder, model, filename):
+    # Loads a current (already trained) model.
+    filename = os.path.join(folder, filename)
+    model.load_state_dict(torch.load(filename))
