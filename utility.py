@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import os
 import skimage
+import torch
 
 # just a collection of functions, to reduce clutter in the notebooks
 # e.g. to convert between different image formats, or create video from images
